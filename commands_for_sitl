@@ -1,0 +1,26 @@
+
+cd ~/PX4-Autopilot/ && make px4_sitl_default gazebo
+
+cd ~/PX4-Autopilot/ && make px4_sitl_default gazebo_typhoon_h480
+roslaunch mavros px4.launch fcu_url:="udp://:14540@127.0.0.1:14557"
+rqt_plot /mavros/setpoint_raw/local/position/x:y:z /mavros/local_position/pose/pose/position/x:y:z 
+rqt_plot /mavros/setpoint_raw/local/velocity/x:y:z /mavros/local_position/velocity_local/twist/linear/x:y:z
+
+cd catkin_ws/offboard_package/
+source devel/setup.bash
+rosrun offb main_FB_hdw.py
+
+rostopic echo /mavros/state
+rostopic echo /mavros/setpoint_raw/local
+rostopic echo /mavros/local_position/velocity_local
+rostopic echo /mavros/local_position/pose
+
+
+export PX4_SITL_WORLD=~/host/danger_zones.world
+
+container=`docker ps | awk '{if (NR!=1) {print $1}}'` ; docker exec -it $container bash
+
+RUN cd ~/PX4-Autopilot/ && make
+
+param show COM_RC*
+param set COM_RCL_EXCEPT 4
