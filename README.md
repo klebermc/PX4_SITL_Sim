@@ -1,5 +1,7 @@
 # PX4_SITL_Sim
 
+> **Note:** All code in this repository (Dockerfile, shell scripts, and the `offb` ROS package) was written by Kleber Cabral. The README documentation and inline code comments were added with AI assistance (Claude).
+
 A Dockerized PX4/ROS Noetic/Gazebo software-in-the-loop (SITL) drone simulation environment, plus a custom ROS "offboard" controller package (`offb`) for position/velocity control of a simulated (or real) PX4 vehicle via MAVROS.
 
 ## Structure
