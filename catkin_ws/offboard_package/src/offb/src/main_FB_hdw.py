@@ -17,8 +17,13 @@ from mavros_msgs.srv import *
 from utils.px4_utilities_FB import fcuModes, Px4Info, AccelerationSetpoints, VelocitySetpoints, PositionSetpoints,customPositionController
 from TSG import Controller
 
+# Offboard control state machine: TAKEOFF ramps altitude up over TL_TIME
+# seconds, MISSION flies toward waypoint `wp` using the flocking-based
+# controller (target attraction + danger-zone avoidance from TSG.py) with
+# velocity setpoints, then IDLE ramps altitude back down over TL_TIME
+# seconds before triggering AUTO.LAND.
 plot_fig=True
-TL_TIME=10
+TL_TIME=10  # ramp duration (s), reused for both the takeoff climb and the idle descent
 class States(Enum):
     TAKEOFF = 1
     MISSION = 2
@@ -119,15 +124,21 @@ def main():
             #print("Mission Mode")
             controlMode = 'vel'
             if FB_Cont.norm(p-wp)<1:
+                # Within 1m of the waypoint: stop avoiding danger zones
+                # (see TSG.py's EndGameTrigger) so the final approach isn't
+                # deflected by the avoidance term. The clean IDLE/AUTO.LAND
+                # transition below (FB_Cont.done(), 0.25m threshold)
+                # handles ending the mission from here.
                 EndGameTrigger=1
-                if FB_Cont.norm(p-wp)<0.1:
-                    quit()
             else:
                 EndGameTrigger=0
 
             #controller
             a,ug,ub,pb = FB_Cont.flocking_based_controller(p, v, wp, dz, dzs, dz_dist, EndGameTrigger)
             # accSet.updateSp(np.array([0.0,0.0,1.0]),np.array([a[0],a[1],0.0]) )
+            # Integrate the controller's acceleration-like output into a
+            # velocity setpoint; `12` is an empirically tuned gain (not
+            # derived from a model), and z is held constant (level flight).
             vSP=(a*12)*dt + v
             vSP[2]=0
             vSP= saturateVECT( vSP ,0.25)
@@ -169,6 +180,10 @@ def main():
     return p_hist, wp, dz, dzs
 
 def setOffboardArm(posSet,modes,rate,sp_pub,px4Info):
+    # PX4 will reject an OFFBOARD mode switch unless setpoints are already
+    # streaming (it needs to see a steady stream before it'll trust
+    # external control), so the sequence here is: Stabilized -> stream
+    # setpoints -> switch to Offboard -> arm.
     #Stabilized mode first
     k=0
     while k<5:

@@ -2,6 +2,10 @@ import numpy as np
 # import matplotlib.pyplot as plt
 from enum import Enum
 
+# Olfati-Saber-style flocking controller: combines a "gamma-agent" term that
+# pulls the vehicle toward a target setpoint with a "beta-agent" repulsive
+# term that pushes it away from danger zones (DZ), using the standard
+# sigma-norm / bump-function (rho_h) smoothing from that framework.
 class Controller:
     # def __init__(self, target, v_A, lethality_radius):
 
@@ -9,6 +13,12 @@ class Controller:
         done = self.norm(POS-Setpoint) < 0.25
         return done
 
+    # POS/VEL: current vehicle position/velocity.
+    # Setpoint: target position to fly toward (gamma term).
+    # DZ_Positions/DZ_Size: danger-zone centers and radii to avoid (beta term).
+    # DistAvoidDZEZ: distance at which danger-zone avoidance starts engaging.
+    # EndGameTrigger: when set, disables danger-zone avoidance entirely
+    # (e.g. final approach, where avoidance maneuvers are no longer wanted).
     def flocking_based_controller(self, POS, VEL, Setpoint, DZ_Positions, DZ_Size, DistAvoidDZEZ, EndGameTrigger):
         c_gamma_1=0.5
         c_gamma_2=5.0
@@ -93,6 +103,12 @@ class Controller:
 
         return AccCmdE , u_gamma , u_beta, pos_beta
 
+    # sigma_norm/sigma_1/rho_h are the standard smooth, bounded-gradient
+    # functions from Olfati-Saber's flocking framework: sigma_norm gives a
+    # differentiable stand-in for Euclidean distance, sigma_1 a saturated
+    # unit-vector-like function, and rho_h ("bump function") smoothly fades
+    # a term from 1 to 0 as its input goes from 0 to 1 (used above to ramp
+    # danger-zone avoidance in/out as the vehicle approaches DistAvoidDZEZ).
     def sigma_norm(self,input):
         epslon=0.5;
         return (1/epslon)*(np.sqrt(1+epslon*(pow(self.norm(input),2)))-1);

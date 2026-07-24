@@ -1,4 +1,9 @@
-# Common Python libraries
+# Post-run trajectory playback: an AnimateSimulation for use with
+# matplotlib.animation.FuncAnimation, replaying the vehicle's recorded
+# position history alongside the target waypoint and danger zones. Not
+# currently wired into main_FB_hdw.py/main_veltuning_hdw.py (the import is
+# commented out there) — those scripts static-plot the final trajectory
+# instead of animating it.
 import numpy as np
 import matplotlib.pyplot as plt
 

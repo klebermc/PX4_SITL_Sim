@@ -1,5 +1,12 @@
 #!/usr/bin/env python
 # ROS python API
+#
+# Shared MAVROS helpers: `fcuModes` wraps the mavros service calls for
+# arming/disarming and switching PX4 flight modes; `Px4Info` holds the
+# latest state/pose/velocity from MAVROS topic callbacks; the
+# `*Setpoints` classes build MAVLink SET_POSITION_TARGET_LOCAL_NED
+# messages, each configuring `type_mask` to enable a different subset of
+# fields (position-only, velocity-only, or position+acceleration).
 import rospy
 import numpy as np
 from mavros_msgs.msg import *
@@ -129,9 +136,9 @@ class VelocitySetpoints:
 
     ## Update setpoint message
     def updateSp(self, velocity):
-        self.sp.velocity.x = vel[0]
-        self.sp.velocity.y = vel[1]
-        self.sp.velocity.z = vel[2]
+        self.sp.velocity.x = velocity[0]
+        self.sp.velocity.y = velocity[1]
+        self.sp.velocity.z = velocity[2]
 
     ## Update setpoint message
     def updateSp2(self, p, vel):

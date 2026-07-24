@@ -19,6 +19,13 @@ from utils.px4_utilities_FB import fcuModes, Px4Info, AccelerationSetpoints, Vel
 # from utils.animate import AnimateSimulation
 from TSG import Controller
 
+# Velocity-setpoint tuning variant of main_FB_hdw.py: instead of flying to
+# a waypoint via the flocking controller, MISSION here repeatedly (1) holds
+# position at `takeoff_pos`, then (2) issues a fixed test velocity command
+# (0.1 m/s forward, with a small proportional term pulling y back to 0) and
+# watches how far the vehicle drifts before returning home — used to
+# observe/tune the vehicle's open-loop velocity response, not to fly a
+# real mission. Repeats for 3 trials (counter_trials) before landing.
 plot_fig=False
 animate = False
 TL_TIME=20
@@ -179,6 +186,8 @@ def main():
     return p_hist, wp, dz, dzs
 
 def setOffboardArm(posSet,modes,rate,sp_pub,px4Info):
+    # PX4 requires setpoints to already be streaming before it accepts an
+    # OFFBOARD mode switch, so: Stabilized -> stream setpoints -> Offboard -> arm.
     #Stabilized mode first
     k=0
     while k<5:

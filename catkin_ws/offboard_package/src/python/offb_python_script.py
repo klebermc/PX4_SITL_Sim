@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+# NOTE: byte-for-byte identical to offb.py in this same directory (which is
+# itself a near-duplicate of offb/src/offb.py) — same square-pattern
+# offboard demo, just saved under a different filename.
 # ROS python API
 import rospy
 

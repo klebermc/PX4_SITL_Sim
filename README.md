@@ -69,6 +69,10 @@ See `commands_for_sitl` for the PX4 SITL/Gazebo launch commands and useful debug
 
 Working SITL setup, last actively used mid-2022. Several development-stage control scripts exist side by side (`main_FB_hdw.py` vs `main_veltuning_hdw.py`) rather than one finished entry point — check `commands_for_sitl` and the script contents to see which was the active one for a given experiment. `legacy/start_old.sh` is an earlier, non-catkin_ws-aware container launch script superseded by `start.sh`.
 
+`offb/src/offb.py`, `python/offb.py`, and `python/offb_python_script.py` are all the same square-pattern offboard demo (the two `python/` copies are byte-identical to each other) — `main_FB_hdw.py`/`main_veltuning_hdw.py` are the more developed control scripts that superseded this demo. `TSG.py`'s flocking/danger-zone-avoidance controller (used by `main_FB_hdw.py`) depends on `sigma_norm`/`sigma_1`/`rho_h` helper math that's defined within `TSG.py` itself, so it runs standalone.
+
+**Bugs fixed (2026-07-24):** `px4_utilities_FB.py`'s `VelocitySetpoints.updateSp` referenced an undefined `vel` instead of its own `velocity` parameter (dead code path — never actually called, only `updateSp2` is used, but fixed regardless). `main_FB_hdw.py` used to hard-`quit()` the process the instant it got within 0.1m of the mission waypoint instead of cleanly landing; removed — the existing `FB_Cont.done()` check (0.25m threshold) already transitions cleanly to the IDLE state, which ramps down and triggers `AUTO.LAND`.
+
 ## Cleanup notes (2026-07-24)
 
 During reorganization, the following were removed as redundant/regenerable:
@@ -76,3 +80,7 @@ During reorganization, the following were removed as redundant/regenerable:
 - `kleber_docker_controller_V1.zip`/`V2.zip` — small superseded snapshots of the controller source, predating the current `catkin_ws/offboard_package/src`.
 - A stale top-level `offboard_package/` directory that duplicated `catkin_ws/offboard_package/` but was missing files present in the latter (the live/mounted copy).
 - An empty, commit-less `.git/` directory nested inside `catkin_ws/offboard_package/` (would otherwise behave like a broken submodule link once this project became its own repo).
+
+## License
+
+MIT — see [LICENSE](LICENSE).

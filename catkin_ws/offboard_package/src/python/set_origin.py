@@ -11,7 +11,12 @@ from pymavlink.dialects.v10 import ardupilotmega as MAV_APM
 from mavros.mavlink import convert_to_rosmsg
 from mavros_msgs.msg import Mavlink
 
-# Global position of the origin
+# Global position of the origin, in the units MAVLink's
+# SET_GPS_GLOBAL_ORIGIN/SET_HOME_POSITION messages expect: lat/lon as
+# degrees * 1e7 (int32), altitude in millimeters. These particular
+# coordinates (Terni, Italy) are placeholder values carried over from the
+# common community version of this script, not tied to this project — edit
+# them if you need SITL local-position math referenced to a real location.
 lat = 42 * 1e7   # Terni
 lon = 12* 1e7   # Terni
 alt = 163 * 1e3

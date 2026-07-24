@@ -10,3 +10,8 @@ __pycache__/
 
 # Runtime mount dir created by start.sh (recorded bags, working copies of world files)
 host/
+
+# OS/editor cruft
+.DS_Store
+*.swp
+

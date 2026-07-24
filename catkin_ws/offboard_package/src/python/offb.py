@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# Standalone (non-catkin-package) near-duplicate of offb/src/offb.py's
+# square-pattern offboard demo — same fcuModes/Controller classes, minus
+# the initial "set STABILIZED first" step before switching to OFFBOARD.
 # ROS python API
 import rospy
 

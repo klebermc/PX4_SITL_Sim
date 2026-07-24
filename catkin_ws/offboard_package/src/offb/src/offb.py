@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+# Basic offboard-mode demo: arms the vehicle, holds a fixed altitude, and
+# steps its position setpoint +1m in x, then +1m in y, then -1m in x, then
+# -1m in y (a simple square pattern), each held for 200 loop iterations
+# (~10s at the 20Hz loop rate below). Simpler precursor to
+# main_FB_hdw.py/main_veltuning_hdw.py, which add a real controller.
 # ROS python API
 import rospy
 
