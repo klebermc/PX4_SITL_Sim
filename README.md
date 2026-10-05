@@ -4,6 +4,10 @@
 
 A Dockerized PX4/ROS Noetic/Gazebo software-in-the-loop (SITL) drone simulation environment, plus a custom ROS "offboard" controller package (`offb`) for position/velocity control of a simulated (or real) PX4 vehicle via MAVROS.
 
+![A simulated quadrotor takes off, flies to a waypoint and lands in Gazebo](figures/offboard_mission.gif)
+
+*The offboard controller (`main_FB_hdw.py`) flying a simulated PX4 quadrotor in `worlds/danger_zones.world`: takeoff, flight to the waypoint, landing. Recorded on 2026-10-05 with PX4 v1.13.3, sped up.*
+
 ## Structure
 
 ```
@@ -14,6 +18,7 @@ PX4_SITL_Sim/
 ├── start.sh                # runs the container, mounting catkin_ws/ and host/
 ├── terminal.sh              # opens an extra shell into the running container
 ├── commands_for_sitl        # cheat-sheet of commands used inside the container
+├── figures/                 # demo GIF used in this README
 ├── worlds/
 │   └── danger_zones.world   # custom Gazebo world
 ├── catkin_ws/
