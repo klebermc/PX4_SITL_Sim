@@ -26,7 +26,11 @@ WORKDIR home/px4devel/
 USER px4devel
 # --recursive: PX4-Autopilot pulls in its own submodules (simulators,
 # board configs, etc.) that the build won't work without.
-RUN git clone https://github.com/PX4/PX4-Autopilot.git --recursive
+# Pinned to the release this setup was developed against: newer PX4 versions
+# no longer build on the Ubuntu 20.04 / ROS Noetic base image used here.
+RUN git clone https://github.com/PX4/PX4-Autopilot.git --recursive --branch v1.13.3
+# ubuntu.sh appends to /home/$USER/.bashrc, and docker build leaves USER unset.
+ENV USER=px4devel
 RUN bash ./PX4-Autopilot/Tools/setup/ubuntu.sh
 # Empty catkin workspace baked into the image; start.sh bind-mounts the
 # real catkin_ws/ over this at runtime, so this just ensures the mount

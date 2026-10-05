@@ -80,6 +80,8 @@ Working SITL setup, last actively used mid-2022. Several development-stage contr
 
 **Bugs fixed (2026-07-24):** `px4_utilities_FB.py`'s `VelocitySetpoints.updateSp` referenced an undefined `vel` instead of its own `velocity` parameter (dead code path — never actually called, only `updateSp2` is used, but fixed regardless). `main_FB_hdw.py` used to hard-`quit()` the process the instant it got within 0.1m of the mission waypoint instead of cleanly landing; removed — the existing `FB_Cont.done()` check (0.25m threshold) already transitions cleanly to the IDLE state, which ramps down and triggers `AUTO.LAND`.
 
+**Bugs fixed (2026-10-05):** the image no longer built, because the `Dockerfile` cloned the latest PX4, whose setup script fails on this base image. PX4 is now pinned to `v1.13.3` and `USER` is set before the setup script runs. With that image, PX4 SITL, Gazebo, MAVROS and `main_FB_hdw.py` ran end to end (the GIF at the top is from that run). PX4 refuses to arm in offboard mode without an RC link until `param set COM_RCL_EXCEPT 4` is entered in the PX4 console (the line is in `commands_for_sitl`).
+
 ## Cleanup notes (2026-07-24)
 
 During reorganization, the following were removed as redundant/regenerable:
