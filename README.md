@@ -6,7 +6,7 @@ A Dockerized PX4/ROS Noetic/Gazebo software-in-the-loop (SITL) drone simulation 
 
 ![A simulated quadrotor takes off, flies to a waypoint and lands in Gazebo](figures/offboard_mission.gif)
 
-*The offboard controller (`main_FB_hdw.py`) flying a simulated PX4 quadrotor in `worlds/danger_zones.world`: takeoff, flight to the waypoint, landing. Recorded on 2026-10-05 with PX4 v1.13.3, sped up.*
+*The offboard controller (`main_FB_hdw.py`) flying a simulated PX4 quadrotor in `worlds/danger_zones.world`: takeoff, flight to the waypoint, landing. Recorded on 2026-10-06 with PX4 v1.13.3, sped up. For the recording, the world's asphalt ground texture was replaced by a plain light floor so the vehicle is easier to see.*
 
 ## Structure
 
@@ -49,23 +49,57 @@ PX4_SITL_Sim/
 
 ## Setup / Run
 
+The simulation needs three shells inside the same container: one for PX4 + Gazebo, one for MAVROS and one for the controller.
+
+**1. Build the image and prepare the world file (on the host)**
+
 ```bash
-./install.sh        # builds the ros-test Docker image
-./start.sh           # runs the container (mounts catkin_ws/ and host/, forwards X11)
+./install.sh                              # builds the ros-test Docker image
+mkdir -p host
+cp worlds/danger_zones.world host/        # host/ is mounted in the container as ~/host
 ```
 
-Inside the container, build the workspace and source it:
+**2. Shell 1: start the container, then PX4 SITL + Gazebo**
 
 ```bash
+./start.sh                                # runs the container (mounts catkin_ws/ and host/, forwards X11)
+```
+
+Inside the container:
+
+```bash
+export PX4_SITL_WORLD=~/host/danger_zones.world
+cd ~/PX4-Autopilot && make px4_sitl_default gazebo
+```
+
+The first run compiles PX4, which takes several minutes. When the `pxh>` prompt appears, allow arming in offboard mode without an RC link:
+
+```
+param set COM_RCL_EXCEPT 4
+```
+
+**3. Shell 2: MAVROS**
+
+```bash
+./terminal.sh                             # opens another shell in the running container
+roslaunch mavros px4.launch fcu_url:="udp://:14540@127.0.0.1:14557"
+```
+
+**4. Shell 3: build and run the offboard controller**
+
+```bash
+./terminal.sh
 cd ~/catkin_ws/offboard_package
 catkin build
 source devel/setup.bash
 rosrun offb main_FB_hdw.py
 ```
 
-See `commands_for_sitl` for the PX4 SITL/Gazebo launch commands and useful debugging one-liners (`rqt_plot`, `rostopic echo`, etc.).
+The vehicle takes off, flies to the waypoint and lands. When the mission ends, the script opens a matplotlib plot of the flown path, the waypoint and the danger zones.
 
-`terminal.sh` opens an additional shell into whichever container is currently running. `clean.sh` removes the built image plus any dangling images.
+`commands_for_sitl` has more debugging one-liners (`rqt_plot`, `rostopic echo`, etc.). `clean.sh` removes the built image plus any dangling images.
+
+The demo GIF at the top was recorded without a display: Gazebo ran headless (`HEADLESS=1`) and a camera sensor added to a copy of the world saved the frames. The steps above, with the Gazebo window, are the interactive equivalent.
 
 ## Key dependencies
 
@@ -80,7 +114,7 @@ Working SITL setup, last actively used mid-2022. Several development-stage contr
 
 **Bugs fixed (2026-07-24):** `px4_utilities_FB.py`'s `VelocitySetpoints.updateSp` referenced an undefined `vel` instead of its own `velocity` parameter (dead code path — never actually called, only `updateSp2` is used, but fixed regardless). `main_FB_hdw.py` used to hard-`quit()` the process the instant it got within 0.1m of the mission waypoint instead of cleanly landing; removed — the existing `FB_Cont.done()` check (0.25m threshold) already transitions cleanly to the IDLE state, which ramps down and triggers `AUTO.LAND`.
 
-**Bugs fixed (2026-10-05):** the image no longer built, because the `Dockerfile` cloned the latest PX4, whose setup script fails on this base image. PX4 is now pinned to `v1.13.3` and `USER` is set before the setup script runs. With that image, PX4 SITL, Gazebo, MAVROS and `main_FB_hdw.py` ran end to end (the GIF at the top is from that run). PX4 refuses to arm in offboard mode without an RC link until `param set COM_RCL_EXCEPT 4` is entered in the PX4 console (the line is in `commands_for_sitl`).
+**Bugs fixed (2026-10-05):** the image no longer built, because the `Dockerfile` cloned the latest PX4, whose setup script fails on this base image. PX4 is now pinned to `v1.13.3` and `USER` is set before the setup script runs. With that image, PX4 SITL, Gazebo, MAVROS and `main_FB_hdw.py` ran end to end (the GIF at the top is from a run of that image). PX4 refuses to arm in offboard mode without an RC link until `param set COM_RCL_EXCEPT 4` is entered in the PX4 console (the line is in `commands_for_sitl`).
 
 ## Cleanup notes (2026-07-24)
 
