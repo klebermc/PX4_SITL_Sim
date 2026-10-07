@@ -6,7 +6,7 @@ A Dockerized PX4/ROS Noetic/Gazebo software-in-the-loop (SITL) drone simulation 
 
 ![A simulated quadrotor takes off, flies to a waypoint and lands in Gazebo](figures/offboard_mission.gif)
 
-*The offboard controller (`main_FB_hdw.py`) flying a simulated PX4 quadrotor in `worlds/danger_zones.world`: takeoff, flight to the waypoint, landing. Recorded on 2026-10-06 with PX4 v1.13.3, sped up. For the recording, the world's asphalt ground texture was replaced by a plain light floor so the vehicle is easier to see.*
+*The offboard controller (`main_FB_hdw.py`) flying a simulated PX4 quadrotor in `worlds/danger_zones.world`: takeoff, flight to the waypoint, landing. Recorded on 2026-10-06 with PX4 v1.13.3, sped up. The camera follows the vehicle and circles it once per minute of simulated time. For the recording, the world's asphalt ground texture was replaced by a plain light floor with a 1 m grid so the vehicle is easier to see.*
 
 ## Structure
 
@@ -99,7 +99,7 @@ The vehicle takes off, flies to the waypoint and lands. When the mission ends, t
 
 `commands_for_sitl` has more debugging one-liners (`rqt_plot`, `rostopic echo`, etc.). `clean.sh` removes the built image plus any dangling images.
 
-The demo GIF at the top was recorded without a display: Gazebo ran headless (`HEADLESS=1`) and a camera sensor added to a copy of the world saved the frames. The steps above, with the Gazebo window, are the interactive equivalent.
+The demo GIF at the top was recorded without a display: Gazebo ran headless (`HEADLESS=1`) and a camera sensor added to a copy of the world, moved around the vehicle by a small Gazebo plugin, saved the frames. The steps above, with the Gazebo window, are the interactive equivalent.
 
 ## Key dependencies
 
