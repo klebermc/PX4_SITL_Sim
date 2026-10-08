@@ -1,6 +1,6 @@
 # PX4_SITL_Sim
 
-> **Note:** All code in this repository (Dockerfile, shell scripts, and the `offb` ROS package) was written by Kleber Cabral. The README documentation and inline code comments were added with AI assistance (Claude).
+> **Note:** The controller and simulation setup in this repository were written by Kleber Cabral. Some files come from, or are adapted from, other sources, listed under [Sources](#sources). The README documentation and inline code comments were added with AI assistance (Claude).
 
 A Dockerized PX4/ROS Noetic/Gazebo software-in-the-loop (SITL) drone simulation environment, plus a custom ROS "offboard" controller package (`offb`) for position/velocity control of a simulated (or real) PX4 vehicle via MAVROS.
 
@@ -25,8 +25,7 @@ PX4_SITL_Sim/
 │   └── offboard_package/    # ROS catkin workspace, mounted live into the container
 │       ├── settings/        # rviz config
 │       └── src/
-│           ├── offb/        # main catkin package (offboard controller node, launch files)
-│           └── python/      # standalone MAVROS python scripts (origin-setting, offboard demo)
+│           └── offb/        # main catkin package (offboard controller node, launch files)
 ├── host/                    # runtime mount point (created by start.sh); holds recorded
 │                             # rosbags and a working copy of the world file — not source, gitignored
 └── legacy/
@@ -40,10 +39,9 @@ PX4_SITL_Sim/
 - **`Dockerfile`** builds a ROS Noetic image with a full PX4-Autopilot clone (built via its Ubuntu setup script), MAVROS, and a non-root `px4devel` user.
 - **`start.sh`** runs that image, bind-mounting `catkin_ws/` and `host/` (created next to the script) into the container as `~/catkin_ws` and `~/host`, with X11 forwarding for GUI apps (Gazebo, rviz, rqt).
 - **`catkin_ws/offboard_package`** is a ROS catkin package (`offb`) containing:
-  - `offb/src/offb.py`, `offb/src/main_FB_hdw.py`, `offb/src/main_veltuning_hdw.py` — offboard control nodes (position/velocity setpoint control loops against MAVROS topics/services), at different stages of development (hardware feedback control, velocity tuning).
+  - `offb/src/main_FB_hdw.py`, `offb/src/main_veltuning_hdw.py` — offboard control nodes (position/velocity setpoint control loops against MAVROS topics/services), at different stages of development (hardware feedback control, velocity tuning).
   - `offb/src/TSG.py` — a `Controller` class, referenced by the main control scripts.
   - `offb/src/utils/px4_utilities_FB.py`, `offb/src/utils/animate.py` — MAVROS helper functions and plotting/animation utilities.
-  - `python/offb.py`, `python/offb_python_script.py`, `python/set_origin.py` — standalone (non-catkin-package) MAVROS scripts, including one that sends `SET_GPS_GLOBAL_ORIGIN`/`SET_HOME_POSITION` for SITL.
 - **`worlds/danger_zones.world`** is a custom Gazebo world used for SITL runs (see `commands_for_sitl` — it's loaded via `PX4_SITL_WORLD`).
 - **`commands_for_sitl`** is a plain-text notes file of commands run inside the container (launching SITL/Gazebo, `roslaunch mavros`, `rqt_plot` setpoint-tracking plots, sourcing the workspace, `rostopic echo`, RC-loss parameter tuning) — useful as a runbook, not a script.
 
@@ -110,7 +108,7 @@ The demo GIF at the top was recorded without a display: Gazebo ran headless (`HE
 
 Working SITL setup, last actively used mid-2022. Several development-stage control scripts exist side by side (`main_FB_hdw.py` vs `main_veltuning_hdw.py`) rather than one finished entry point — check `commands_for_sitl` and the script contents to see which was the active one for a given experiment. `legacy/start_old.sh` is an earlier, non-catkin_ws-aware container launch script superseded by `start.sh`.
 
-`offb/src/offb.py`, `python/offb.py`, and `python/offb_python_script.py` are all the same square-pattern offboard demo (the two `python/` copies are byte-identical to each other) — `main_FB_hdw.py`/`main_veltuning_hdw.py` are the more developed control scripts that superseded this demo. `TSG.py`'s flocking/danger-zone-avoidance controller (used by `main_FB_hdw.py`) depends on `sigma_norm`/`sigma_1`/`rho_h` helper math that's defined within `TSG.py` itself, so it runs standalone.
+`TSG.py`'s flocking/danger-zone-avoidance controller (used by `main_FB_hdw.py`) depends on `sigma_norm`/`sigma_1`/`rho_h` helper math that's defined within `TSG.py` itself, so it runs standalone.
 
 **Bugs fixed (2026-07-24):** `px4_utilities_FB.py`'s `VelocitySetpoints.updateSp` referenced an undefined `vel` instead of its own `velocity` parameter (dead code path — never actually called, only `updateSp2` is used, but fixed regardless). `main_FB_hdw.py` used to hard-`quit()` the process the instant it got within 0.1m of the mission waypoint instead of cleanly landing; removed — the existing `FB_Cont.done()` check (0.25m threshold) already transitions cleanly to the IDLE state, which ramps down and triggers `AUTO.LAND`.
 
@@ -123,6 +121,17 @@ During reorganization, the following were removed as redundant/regenerable:
 - `kleber_docker_controller_V1.zip`/`V2.zip` — small superseded snapshots of the controller source, predating the current `catkin_ws/offboard_package/src`.
 - A stale top-level `offboard_package/` directory that duplicated `catkin_ws/offboard_package/` but was missing files present in the latter (the live/mounted copy).
 - An empty, commit-less `.git/` directory nested inside `catkin_ws/offboard_package/` (would otherwise behave like a broken submodule link once this project became its own repo).
+
+## Sources
+
+Some files in this repository come from, or are adapted from, other sources. The ones identified are:
+
+- The PX4 User Guide's MAVROS offboard control example (C++), https://docs.px4.io/main/en/ros/mavros_offboard_cpp (CC BY 4.0).
+- Mohamed Abdelkader's PX4 offboard test script in https://github.com/mzahana/px4_indoor_navigation (flight-mode service wrappers).
+- The sample launch file of `vrpn_client_ros`, https://github.com/ros-drivers/vrpn_client_ros, and the MAVROS launch files, https://github.com/mavlink/mavros.
+- The Docker GUI tutorial on the ROS wiki, http://wiki.ros.org/docker/Tutorials/GUI.
+
+**Removed (2026-10-08):** a GPS-origin script and three copies of a square-pattern offboard demo, because their sources' licences (GPL-3.0, and no licence) do not allow publishing them under this repository's MIT licence. The SITL steps above never used them.
 
 ## License
 

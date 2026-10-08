@@ -27,7 +27,7 @@
  
  <node pkg="vrpn_client_ros" type="vrpn_client_node" name="vrpn_client_node" output="screen">
     <rosparam subst_value="true">
-      server: 192.168.2.18
+      server: localhost   # address of the motion-capture (VRPN) server
       port: 3883
 
       update_frequency: 100.0
